@@ -1,18 +1,21 @@
 package modelos
 
 import (
+	"api/src/securanca"
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/badoux/checkmail"
 )
 
 // Usuario representa um usuário utilizando a rede social
 type Usuario struct {
-	ID       uint64 `json:"id,omitempty"`
-	Nome     string `json:"nome,omitempty"`
-	Nick     string `json:"nick,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Senha    string `json:"senha,omitempty"`
+	ID       uint64    `json:"id,omitempty"`
+	Nome     string    `json:"nome,omitempty"`
+	Nick     string    `json:"nick,omitempty"`
+	Email    string    `json:"email,omitempty"`
+	Senha    string    `json:"senha,omitempty"`
 	CriadoEm time.Time `json:"CriadoEm,omitempty"`
 }
 
@@ -21,7 +24,9 @@ func (usuario *Usuario) Preparar(etapa string) error {
 		return erro
 	}
 
-	usuario.Formatar()
+	if erro := usuario.Formatar(etapa); erro != nil {
+		return erro
+	}
 	return nil
 }
 
@@ -38,6 +43,10 @@ func (usuario *Usuario) validar(etapa string) error {
 		return errors.New("o campo email é obrigatório e não pode estar em branco")
 	}
 
+	if erro := checkmail.ValidateFormat(usuario.Email); erro != nil {
+		return errors.New("o e-mail inserido é inválido")
+	}
+
 	if etapa == "cadastro" && usuario.Senha == "" {
 		return errors.New("o campo senha é obrigatório e não pode estar em branco")
 	}
@@ -45,8 +54,19 @@ func (usuario *Usuario) validar(etapa string) error {
 	return nil
 }
 
-func (usuario *Usuario) Formatar() {
+func (usuario *Usuario) Formatar(etapa string) error {
 	usuario.Nome = strings.TrimSpace(usuario.Nome)
 	usuario.Nick = strings.TrimSpace(usuario.Nick)
 	usuario.Email = strings.TrimSpace(usuario.Email)
+
+	if etapa == "cadastro" {
+		senhaComHash, erro := securanca.Hash(usuario.Senha)
+		if erro != nil {
+			return erro
+		}
+
+		usuario.Senha = string(senhaComHash)
+	}
+
+	return nil
 }
