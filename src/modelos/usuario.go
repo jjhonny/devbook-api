@@ -1,6 +1,10 @@
 package modelos
 
-import "time"
+import (
+	"errors"
+	"strings"
+	"time"
+)
 
 // Usuario representa um usuário utilizando a rede social
 type Usuario struct {
@@ -10,4 +14,39 @@ type Usuario struct {
 	Email    string `json:"email,omitempty"`
 	Senha    string `json:"senha,omitempty"`
 	CriadoEm time.Time `json:"CriadoEm,omitempty"`
+}
+
+func (usuario *Usuario) Preparar() error {
+	if erro := usuario.validar(); erro != nil {
+		return erro
+	}
+
+	usuario.Formatar()
+	return nil
+}
+
+func (usuario *Usuario) validar() error {
+	if usuario.Nome == "" {
+		return errors.New("o campo nome é obrigatório e não pode estar em branco")
+	}
+
+	if usuario.Nick == "" {
+		return errors.New("o campo nick é obrigatório e não pode estar em branco")
+	}
+
+	if usuario.Email == "" {
+		return errors.New("o campo email é obrigatório e não pode estar em branco")
+	}
+
+	if usuario.Senha == "" {
+		return errors.New("o campo senha é obrigatório e não pode estar em branco")
+	}
+
+	return nil
+}
+
+func (usuario *Usuario) Formatar() {
+	usuario.Nome = strings.TrimSpace(usuario.Nome)
+	usuario.Nick = strings.TrimSpace(usuario.Nick)
+	usuario.Email = strings.TrimSpace(usuario.Email)
 }
